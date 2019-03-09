@@ -1,0 +1,54 @@
+---
+- name: check if cluster exists
+  command: kubectl cluster-info
+  register: cluster_exists
+  ignore_errors: yes
+  when: "ansible_default_ipv4.address == master_ip"
+
+- name: initialise cluster
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  when: ansible_default_ipv4.address == master_ip and cluster_exists.rc != 0
+
+- name: create .kube dir
+  file:
+    path: /root/.kube
+    state: directory
+    owner: "root"
+    group: "root"
+  when: ansible_default_ipv4.address == master_ip
+
+- name: copy config file to HOME/.kube dir
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+    owner: "root"
+    group: "root"
+    force: yes
+    mode: 0400
+  when: ansible_default_ipv4.address == master_ip
+
+- name: copy config file to root/.kube dir
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: yes
+    owner: root
+    group: root
+    force: yes
+    mode: 0400
+  when: ansible_default_ipv4.address == master_ip
+
+- name: install pod network addons
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml
+  when: ansible_default_ipv4.address == master_ip
+
+- name: get join token
+  command:  kubeadm token create --print-join-command
+  register: join_token
+  when: ansible_default_ipv4.address == master_ip
+
+- name: join nodes
+  command: "{{ hostvars[master_ip].join_token.stdout }}"
+  ignore_errors: yes
+  when: ansible_default_ipv4.address != master_ip

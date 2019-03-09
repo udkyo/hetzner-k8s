@@ -1,0 +1,7 @@
+---
+- name: Kubernetes
+  hosts: all
+  vars:
+    master_ip: "{{ master_ip }}"
+  roles:
+    - kubernetes

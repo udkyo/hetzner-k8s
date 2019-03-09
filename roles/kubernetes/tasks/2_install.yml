@@ -1,0 +1,49 @@
+---
+- name: add docker repo
+  blockinfile:
+    dest: /etc/yum.repos.d/docker.repo
+    create: yes
+    block: |
+      [docker-ce-stable]
+      name=Docker CE Stable - $basearch
+      baseurl=https://download.docker.com/linux/centos/7/$basearch/stable
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://download.docker.com/linux/centos/gpg
+
+- name: add k8s repo
+  blockinfile:
+    dest: /etc/yum.repos.d/kubernetes.repo
+    create: yes
+    block: |
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+- name: update packages
+  yum:
+    name: "*"
+    state: latest
+
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - docker
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: enable services
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  with_items:
+    - docker
+    - kubelet

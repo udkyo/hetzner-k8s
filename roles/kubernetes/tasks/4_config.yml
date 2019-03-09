@@ -1,0 +1,30 @@
+---
+- name: create config dir
+  file:
+    path: /var/kube
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+
+- name: Get helm
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-helm/helm-v2.12.3-linux-amd64.tar.gz"
+    dest: "/root/"
+  register: helm
+
+- name: Unarchive helm
+  unarchive:
+    src: "/root/helm-v2.12.3-linux-amd64.tar.gz"
+    dest: "/tmp"
+    copy: no
+    mode: 0755
+  when: helm is changed
+
+- name: Move helm to bin
+  command: mv /tmp/linux-amd64/helm /usr/bin
+  when: helm is changed
+
+- name: Move tiller to bin
+  command: mv /tmp/linux-amd64/tiller /usr/bin
+  when: helm is changed

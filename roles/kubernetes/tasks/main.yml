@@ -1,0 +1,7 @@
+---
+- include: 1_prep.yml
+- include: 2_install.yml
+- include: 3_cluster.yml
+- include: 4_config.yml
+  when: ansible_default_ipv4.address == master_ip
+
